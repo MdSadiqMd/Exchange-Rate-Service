@@ -17,6 +17,10 @@ type Config struct {
 		BaseURL string        `yaml:"base_url"`
 		Timeout time.Duration `yaml:"timeout"`
 	} `yaml:"external_api"`
+
+	Cache struct {
+		TTL int `yaml:"ttl"`
+	} `yaml:"cache"`
 }
 
 func Load(path string) (*Config, error) {
