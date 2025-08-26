@@ -11,7 +11,7 @@ import (
 )
 
 func StartRateUpdater(ctx context.Context, svc service.ConversionService, c cache.Cache) {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 
 	updateRates(ctx, svc, c)

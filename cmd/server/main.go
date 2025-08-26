@@ -46,11 +46,13 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+
 	httpHandler := transport.MakeHTTPHandler(conversionEndpoints, logger)
+	r.Mount("/", httpHandler)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-		Handler:      httpHandler,
+		Handler:      r,
 		ReadTimeout:  cfg.Server.Timeout,
 		WriteTimeout: cfg.Server.Timeout,
 	}
