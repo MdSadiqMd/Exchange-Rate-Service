@@ -14,6 +14,7 @@ import (
 
 	stdlog "log"
 
+	"github.com/MdSadiqMd/Exchange-Rate-Service/internal/scheduler"
 	service "github.com/MdSadiqMd/Exchange-Rate-Service/internal/services"
 	"github.com/MdSadiqMd/Exchange-Rate-Service/pkg/cache"
 	"github.com/MdSadiqMd/Exchange-Rate-Service/pkg/config"
@@ -53,6 +54,9 @@ func main() {
 		ReadTimeout:  cfg.Server.Timeout,
 		WriteTimeout: cfg.Server.Timeout,
 	}
+
+	ctx := context.Background()
+	go scheduler.StartRateUpdater(ctx, conversionService, cache)
 
 	go func() {
 		stdlog.Printf("Starting server on port %d", cfg.Server.Port)
