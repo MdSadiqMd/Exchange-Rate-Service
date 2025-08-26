@@ -35,7 +35,7 @@ func (c *Client) Convert(ctx context.Context, params domain.ExchangeRate) (domai
 	date := params.Date
 	dateStr := ""
 	if !date.IsZero() {
-		dateStr = date.Format("2025-08-26")
+		dateStr = date.Format("2006-01-02")
 	}
 
 	q := url.Values{}
