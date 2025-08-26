@@ -1,0 +1,11 @@
+server:
+  port: 8080
+  timeout: 30s
+
+external_api:
+  base_url: "https://api.exchangerate.host"
+  api_key: "" # can get API Key From: https://exchangerate.host/ 
+  timeout: 10s
+
+cache:
+  ttl: 3600
