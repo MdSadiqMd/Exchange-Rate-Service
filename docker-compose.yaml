@@ -1,0 +1,8 @@
+services:
+  exchange-rate-service:
+    build: .
+    container_name: exchange-rate-service  
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/root/config.yaml:ro
