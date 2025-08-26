@@ -12,30 +12,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
-	"gopkg.in/yaml.v3"
 
 	"github.com/MdSadiqMd/Exchange-Rate-Service/pkg/config"
 )
 
-func loadConfig(path string) (*config.Config, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var cfg config.Config
-	decoder := yaml.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
-		return nil, err
-	}
-
-	return &cfg, nil
-}
-
 func main() {
 	_ = godotenv.Load()
-	cfg, err := loadConfig("config.yaml")
+	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
