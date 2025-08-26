@@ -3,17 +3,13 @@ package domain
 import "time"
 
 type ExchangeRate struct {
-	From      string    `json:"from"`
-	To        string    `json:"to"`
-	Rate      float64   `json:"rate"`
-	Date      time.Time `json:"date"`
-	Timestamp int64     `json:"timestamp"`
+	From   string    `json:"from"`
+	To     string    `json:"to"`
+	Amount float64   `json:"amount"`
+	Date   time.Time `json:"date,omitempty"`
 }
 
 type ExchangeRateResponse struct {
-	Success   bool               `json:"success"`
-	Base      string             `json:"base"`
-	Date      string             `json:"date"`
-	Rates     map[string]float64 `json:"rates"`
-	Timestamp int64              `json:"timestamp"`
+	Success bool    `json:"success"`
+	Amount  float64 `json:"amount"`
 }

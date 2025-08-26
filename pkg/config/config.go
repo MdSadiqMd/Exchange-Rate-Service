@@ -12,6 +12,11 @@ type Config struct {
 		Port    int           `yaml:"port"`
 		Timeout time.Duration `yaml:"timeout"`
 	} `yaml:"server"`
+
+	ExternalAPI struct {
+		BaseURL string        `yaml:"base_url"`
+		Timeout time.Duration `yaml:"timeout"`
+	} `yaml:"external_api"`
 }
 
 func Load(path string) (*Config, error) {
