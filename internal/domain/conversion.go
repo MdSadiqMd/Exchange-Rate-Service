@@ -8,13 +8,14 @@ import (
 type ConversionRequest struct {
 	From   string    `json:"from"`
 	To     string    `json:"to"`
-	Amount float64   `json:"amount"`
+	Amount Money     `json:"amount"`
 	Date   time.Time `json:"date,omitempty"`
 }
 
 type ConversionResponse struct {
-	Success bool    `json:"success"`
-	Result  float64 `json:"result"`
+	Success bool  `json:"success"`
+	Result  Money `json:"result"`
+	Rate    Money `json:"rate"`
 }
 
 func (r *ConversionRequest) Validate() error {
@@ -24,8 +25,11 @@ func (r *ConversionRequest) Validate() error {
 	if r.To == "" {
 		return fmt.Errorf("to currency is required")
 	}
-	if r.Amount <= 0 {
+	if r.Amount.IsZero() || r.Amount.IsNegative() {
 		return fmt.Errorf("amount must be positive")
+	}
+	if err := r.Amount.Validate(); err != nil {
+		return fmt.Errorf("invalid amount: %w", err)
 	}
 	if r.Date.After(time.Now()) {
 		return fmt.Errorf("date cannot be in the future")
