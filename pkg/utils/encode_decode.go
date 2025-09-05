@@ -4,64 +4,74 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/MdSadiqMd/Exchange-Rate-Service/internal/domain"
+	"github.com/go-chi/chi/v5"
 )
 
-type errorer interface {
-	Error() error
-}
+type errorer interface{ Error() error }
 
 type httpError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
-func (e *httpError) Error() string {
-	return e.Message
-}
+func (e *httpError) Error() string { return e.Message }
 
 func DecodeConvertRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	from := r.URL.Query().Get("from")
-	to := r.URL.Query().Get("to")
-	amountStr := r.URL.Query().Get("amount")
-	date := r.URL.Query().Get("date")
-	if from == "" {
-		return nil, &httpError{Code: http.StatusBadRequest, Message: "from parameter is required"}
+	var req struct {
+		From   string       `json:"from"`
+		To     string       `json:"to"`
+		Amount domain.Money `json:"amount"`
+		Date   string       `json:"date,omitempty"`
 	}
-	if to == "" {
-		return nil, &httpError{Code: http.StatusBadRequest, Message: "to parameter is required"}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, &httpError{Code: http.StatusBadRequest, Message: "invalid JSON body"}
 	}
-	if amountStr == "" {
-		return nil, &httpError{Code: http.StatusBadRequest, Message: "amount parameter is required"}
-	}
-
-	amount, err := strconv.ParseFloat(amountStr, 64)
-	if err != nil {
-		return nil, &httpError{Code: http.StatusBadRequest, Message: "invalid amount"}
+	if req.From == "" || req.To == "" || req.Amount.IsZero() {
+		return nil, &httpError{Code: http.StatusBadRequest, Message: "from, to and amount are required"}
 	}
 
 	var parsedDate time.Time
-	if date != "" {
-		parsedDate, err = time.Parse("2006-01-02", date)
+	if req.Date != "" {
+		var err error
+		parsedDate, err = time.Parse("2006-01-02", req.Date)
 		if err != nil {
-			return nil, &httpError{Code: http.StatusBadRequest, Message: "invalid date format, expected YYYY-MM-DD"}
+			return nil, &httpError{Code: http.StatusBadRequest, Message: "invalid date format"}
 		}
 	}
 
 	return domain.ConversionRequest{
-		From:   from,
-		To:     to,
-		Amount: amount,
+		From:   req.From,
+		To:     req.To,
+		Amount: req.Amount,
 		Date:   parsedDate,
 	}, nil
 }
 
-func EncodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+type GetRateRequest struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
 
+func DecodeGetRateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := GetRateRequest{
+		From: chi.URLParam(r, "from"),
+		To:   chi.URLParam(r, "to"),
+	}
+	if req.From == "" || req.To == "" {
+		return nil, &httpError{Code: http.StatusBadRequest, Message: "from and to required"}
+	}
+	return req, nil
+}
+
+func DecodeEmptyRequest(_ context.Context, _ *http.Request) (interface{}, error) {
+	return struct{}{}, nil
+}
+
+func EncodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
 	if e, ok := response.(errorer); ok && e.Error() != nil {
 		EncodeError(ctx, e.Error(), w)
 		return nil
@@ -71,15 +81,14 @@ func EncodeResponse(ctx context.Context, w http.ResponseWriter, response interfa
 }
 
 func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
+	w.Header().Set("Content-Type", "application/json")
 	code := http.StatusInternalServerError
-	if httpErr, ok := err.(*httpError); ok {
-		code = httpErr.Code
+	if he, ok := err.(*httpError); ok {
+		code = he.Code
 	}
 
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": false,
 		"error":   err.Error(),
 	})
