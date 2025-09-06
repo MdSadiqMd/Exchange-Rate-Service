@@ -35,10 +35,10 @@ func main() {
 		stdlog.Fatalf("failed to load config: %v", err)
 	}
 
-	cache := cache.NewMemoryCache(time.Duration(cfg.Cache.TTL) * time.Second)
-	api := external.NewClient(cfg.ExternalAPI.BaseURL, cfg.ExternalAPI.APIKey, cfg.ExternalAPI.Timeout)
+	memCache := cache.NewMemoryCache(time.Duration(cfg.Cache.TTL) * time.Second)
+	apiClient := external.NewClient(cfg.ExternalAPI.BaseURL, cfg.ExternalAPI.APIKey, cfg.ExternalAPI.Timeout)
 
-	conversionService := service.NewConversionService(logger, api, cache)
+	conversionService := service.NewConversionService(logger, apiClient, memCache)
 	conversionEndpoints := endpoint.MakeConversionEndpoints(conversionService)
 
 	r := chi.NewRouter()
@@ -58,7 +58,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	go scheduler.StartRateUpdater(ctx, conversionService, cache)
+	go scheduler.NewScheduler(conversionService, memCache).StartRateUpdater(ctx)
 
 	go func() {
 		stdlog.Printf("Starting server on port %d", cfg.Server.Port)
@@ -73,9 +73,9 @@ func main() {
 
 	stdlog.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(ctxShutdown); err != nil {
 		stdlog.Fatalf("server forced to shutdown: %s", err)
 	}
 	stdlog.Println("Server exited properly")

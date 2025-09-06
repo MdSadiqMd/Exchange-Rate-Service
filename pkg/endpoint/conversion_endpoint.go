@@ -25,12 +25,6 @@ func MakeConversionEndpoints(svc service.ConversionService) ConversionEndpoints 
 	}
 }
 
-type convertResponse struct {
-	*domain.ConversionResponse
-}
-
-func (r convertResponse) Error() error { return nil }
-
 func makeConvertEndpoint(svc service.ConversionService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(domain.ConversionRequest)
